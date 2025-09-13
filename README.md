@@ -12,10 +12,10 @@ https://github.com/oe7set/Text2Gcode/releases/latest
 
 Prebuilt single-file binaries (PyInstaller):
 
-| Platform | File | Download (latest) |
-|----------|------|-------------------|
-| Windows x64 | `Text2Gcode-windows-x64.exe` | [Download](https://github.com/oe7set/Text2Gcode/releases/download/v0.1.0/Text2Gcode-windows-x64.exe) |
-| Linux x64 | `Text2Gcode-linux-x64` | [Download](https://github.com/oe7set/Text2Gcode/releases/download/v0.1.0/Text2Gcode-linux-x64) |
+| Platform | File | Download (latest)                                                                                    |
+|----------|------|------------------------------------------------------------------------------------------------------|
+| Windows x64 | `Text2Gcode-windows-x64.exe` | [Download](https://github.com/oe7set/Text2Gcode/releases/download/v0.1.1/Text2Gcode-windows-x64.exe) |
+| Linux x64 | `Text2Gcode-linux-x64` | [Download](https://github.com/oe7set/Text2Gcode/releases/download/v0.1.1/Text2Gcode-linux-x64)       |
 
 
 
