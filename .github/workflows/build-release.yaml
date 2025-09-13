@@ -90,13 +90,14 @@ jobs:
           tag: ${{ github.ref_name }}
           name: Text2Gcode ${{ github.ref_name }}
           body: |
+            A lightweight tool to convert text into plotter / CNC friendly G-code with a live Qt preview.
+            
             Automated release build for tag ${{ github.ref_name }}.
 
             Includes:
             - Windows x64 Single File (.exe)
             - Linux x64 Single File
 
-            Hinweis: Erstes Laden kann wegen OneFile-Entpacken etwas dauern.
           artifacts: "Text2Gcode-windows-x64.exe,Text2Gcode-linux-x64"
           allowUpdates: true
           artifactErrorsFailBuild: true
