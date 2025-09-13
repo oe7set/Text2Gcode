@@ -1,0 +1,38 @@
+[project]
+name = "text2gcode"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyside6>=6.9.2",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.15.0",
+    "ruff>=0.13.0",
+]
+
+
+## Linting configuration
+[tool.ruff]
+# Modern uv linting configuration (replaces deprecated top-level ruff settings)
+line-length = 130                            # Maximum allowed line length
+select = [
+    "E",  # pycodestyle errors (formatting)
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes (undefined names, unused imports)
+    "I",  # isort issues (import sorting)
+    "C",  # flake8-comprehensions (list/set/dict comprehensions)
+    "B",  # flake8-bugbear (potential bugs and performance issues)
+]
+src = ["src"]                                # Directories to lint
+# ignore = ["E203", "W503"]                 # Optional: errors to ignore
+ignore = [
+    "C901", # Ignore "too complex" errors
+]
+[tool.ruff.isort]
+# Configuration for isort (import sorting)
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+known-third-party = []
