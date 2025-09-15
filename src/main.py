@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
     QToolButton,
+    QGridLayout
 )
 
 
@@ -32,7 +33,8 @@ def text_to_path(text, font_family="Arial", font_size=50):
 
 
 # Helper function: Convert path to G-Code
-def path_to_gcode(path: QPainterPath, scale=0.1, safe_z=5.0, cut_z=0.0, feedrate=500):
+def path_to_gcode(path: QPainterPath, scale=0.1, safe_z=5.0, cut_z=0.0, feedrate=500,
+                 x_offset=0.0, y_offset=0.0, z_offset=0.0):
     gcode = [
         "G21 ; mm mode",
         "G90 ; absolute positioning"
@@ -46,26 +48,27 @@ def path_to_gcode(path: QPainterPath, scale=0.1, safe_z=5.0, cut_z=0.0, feedrate
     for i in range(path.elementCount()):
         elem = path.elementAt(i)
 
-        x = elem.x * scale
-        y = -elem.y * scale  # Invert Y-axis for CNC
+        x = elem.x * scale + x_offset
+        y = -elem.y * scale + y_offset  # Invert Y-axis for CNC
 
         if elem.type == QPainterPath.ElementType.MoveToElement:
             if pen_down:
-                gcode.append(f"G0 Z{safe_z:.2f}")  # Pen up
+                gcode.append(f"G0 Z{safe_z + z_offset:.2f}")  # Pen up
                 pen_down = False
             gcode.append(f"G0 X{x:.2f} Y{y:.2f}")  # Position
 
         else:  # LineTo or CurveTo
             if not pen_down:
-                gcode.append(f"G1 Z{cut_z:.2f} F{feedrate}")  # Pen down
+                gcode.append(f"G1 Z{cut_z + z_offset:.2f} F{feedrate}")  # Pen down
                 pen_down = True
             gcode.append(f"G1 X{x:.2f} Y{y:.2f} F{feedrate}")
 
     if pen_down:
-        gcode.append(f"G0 Z{safe_z:.2f}")  # Pen up at the end
+        gcode.append(f"G0 Z{safe_z + z_offset:.2f}")  # Pen up at the end
 
     gcode.append("M2 ; Program end")
     return "\n".join(gcode)
+
 
 
 class PreviewWidget(QWidget):
@@ -167,6 +170,45 @@ class GCodeApp(QMainWindow):
         input_group.setLayout(input_layout)
         main_layout.addWidget(input_group)
 
+        # In der __init__-Methode von GCodeApp nach dem size_group Block
+
+        # Offset Group
+        offset_group = QGroupBox("Position Offset")
+        offset_layout = QGridLayout()
+
+        # X-Offset
+        x_offset_label = QLabel("X-Offset:")
+        self.x_offset_spin = QDoubleSpinBox()
+        self.x_offset_spin.setRange(-1000, 1000)
+        self.x_offset_spin.setValue(0)
+        self.x_offset_spin.setSingleStep(1)
+        self.x_offset_spin.setSuffix(" mm")
+        offset_layout.addWidget(x_offset_label, 0, 0)
+        offset_layout.addWidget(self.x_offset_spin, 0, 1)
+
+        # Y-Offset
+        y_offset_label = QLabel("Y-Offset:")
+        self.y_offset_spin = QDoubleSpinBox()
+        self.y_offset_spin.setRange(-1000, 1000)
+        self.y_offset_spin.setValue(0)
+        self.y_offset_spin.setSingleStep(1)
+        self.y_offset_spin.setSuffix(" mm")
+        offset_layout.addWidget(y_offset_label, 0, 2)
+        offset_layout.addWidget(self.y_offset_spin, 0, 3)
+
+        # Z-Offset
+        z_offset_label = QLabel("Z-Offset:")
+        self.z_offset_spin = QDoubleSpinBox()
+        self.z_offset_spin.setRange(-50, 50)
+        self.z_offset_spin.setValue(0)
+        self.z_offset_spin.setSingleStep(0.5)
+        self.z_offset_spin.setSuffix(" mm")
+        offset_layout.addWidget(z_offset_label, 1, 0)
+        offset_layout.addWidget(self.z_offset_spin, 1, 1)
+
+        offset_group.setLayout(offset_layout)
+        main_layout.addWidget(offset_group)
+
         # Size & Dimensions Group
         size_group = QGroupBox("Size Configuration")
         size_layout = QVBoxLayout()
@@ -181,6 +223,19 @@ class GCodeApp(QMainWindow):
         size_layout_h.addWidget(self.size_spin)
         size_layout_h.addStretch(1)
         size_layout.addLayout(size_layout_h)
+
+        # Feedrate input field
+        feedrate_layout = QHBoxLayout()
+        feedrate_label = QLabel("Feedrate:")
+        self.feedrate_spin = QDoubleSpinBox()
+        self.feedrate_spin.setRange(50, 5000)
+        self.feedrate_spin.setValue(500)  # Standard-Vorschubgeschwindigkeit
+        self.feedrate_spin.setSingleStep(50)
+        self.feedrate_spin.setSuffix(" mm/min")
+        feedrate_layout.addWidget(feedrate_label)
+        feedrate_layout.addWidget(self.feedrate_spin)
+        feedrate_layout.addStretch(1)
+        size_layout.addLayout(feedrate_layout)
 
         # Maximum dimensions input fields
         max_dim_layout = QHBoxLayout()
@@ -294,6 +349,14 @@ class GCodeApp(QMainWindow):
         font_size = self.size_spin.value()
         scale = 0.1  # Same scale as in path_to_gcode
 
+        # Get offset values
+        x_offset = self.x_offset_spin.value()
+        y_offset = self.y_offset_spin.value()
+        z_offset = self.z_offset_spin.value()
+
+        # Get feedrate value
+        feedrate = self.feedrate_spin.value()
+
         # Check if max. dimensions are enabled
         if self.max_dim_check.isChecked():
             max_width_mm = self.max_width_spin.value()
@@ -333,7 +396,8 @@ class GCodeApp(QMainWindow):
         height_mm = bounds.height() * scale
         self.dimensions_label.setText(f"Dimensions: {width_mm:.2f} x {height_mm:.2f} mm")
 
-        gcode = path_to_gcode(path, scale=scale)
+        gcode = path_to_gcode(path, scale=scale,
+                              x_offset=x_offset, y_offset=y_offset, z_offset=z_offset, feedrate=feedrate)
         self.gcode_preview.setPlainText(gcode)
 
         self.status_bar.showMessage("G-code generated successfully", 3000)
